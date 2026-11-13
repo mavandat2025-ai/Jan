@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F168 VIP - Cổng Game Giải Trí Đẳng Cấp</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Chakra Petch (cho số và game) -->
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tone.js cho hiệu ứng âm thanh tổng hợp -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        gaming: ['Chakra Petch', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            300: '#fde047',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        },
+                        obsidian: {
+                            800: '#161922',
+                            900: '#0d0f14',
+                            950: '#07080b',
+                        }
+                    },
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(234, 179, 8, 0.4)' },
+                            '50%': { boxShadow: '0 0 30px rgba(249, 115, 22, 0.8)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-2px, 0, 0) rotate(-2deg)' },
+                            '20%, 80%': { transform: 'translate3d(4px, 0, 0) rotate(2deg)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-6px, 0, 0) rotate(-4deg)' },
+                            '40%, 60%': { transform: 'translate3d(6px, 0, 0) rotate(4deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Tùy chỉnh thanh cuộn và hiệu ứng đặc biệt cho Game */
+        body {
+            background-color: #07080b;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d0f14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ca8a04;
+            border-radius: 9999px;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #fde047 0%, #f59e0b 50%, #ea580c 100%);
+        }
+        .gold-text {
+            background: linear-gradient(to bottom, #fef08a, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-glass {
+            background: rgba(22, 25, 34, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(250, 204, 21, 0.15);
+        }
+        .slot-reel-blur {
+            filter: blur(2px);
+            transform: scaleY(1.1);
+            transition: all 0.1s;
+        }
+        /* Hiệu ứng đĩa Tài Xỉu */
+        .bowl-cover {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+        }
+        .bowl-open {
+            transform: translate(110px, -90px) rotate(25deg);
+            opacity: 0.25;
+            pointer-events: none;
+        }
+        /* Vòng quay may mắn */
+        #lucky-wheel-canvas {
+            transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col select-none">
+
+    <!-- TOAST NOTIFICATION CONTAINER (Thay thế alert) -->
+    <div id="toast-container" class="fixed top-20 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- HEADER / NAVBAR -->
+    <header class="sticky top-0 z-50 bg-obsidian-900/95 backdrop-blur-md border-b border-yellow-500/20 shadow-lg">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="switchLobbyTab('all')">
+                <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <i class="fa-solid fa-crown text-obsidian-950 text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-gaming font-bold text-2xl tracking-wider gold-text">F168</span>
+                    <span class="hidden sm:inline-block text-[10px] uppercase tracking-widest bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1 border border-yellow-500/30">VIP CLUB</span>
+                </div>
+            </div>
+
+            <!-- Thanh công cụ nhanh trên Desktop -->
+            <nav class="hidden lg:flex items-center gap-1 bg-obsidian-950/80 p-1 rounded-xl border border-white/5">
+                <button onclick="openModal('quest-modal')" class="px-3 py-1.5 rounded-lg text-sm font-medium text-yellow-300 hover:bg-yellow-500/10 flex items-center gap-1.5 transition relative">
+                    <i class="fa-solid fa-gift text-orange-400 animate-bounce"></i> Nhiệm Vụ Tân Thủ
+                    <span id="quest-badge" class="hidden w-2 h-2 rounded-full bg-red-500"></span>
+                </button>
+                <button onclick="openModal('leaderboard-modal')" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-trophy text-yellow-400"></i> Bảng Xếp Hạng
+                </button>
+                <button onclick="openModal('history-modal')" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Lịch Sử
+                </button>
+                <button onclick="toggleSound()" id="sound-btn" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition" title="Bật/Tắt âm thanh">
+                    <i class="fa-solid fa-volume-high text-emerald-400"></i>
+                </button>
+            </nav>
+
+            <!-- Khu vực Tài khoản (Chưa đăng nhập / Đã đăng nhập) -->
+            <div id="auth-buttons" class="flex items-center gap-2">
+                <button onclick="openAuthModal('login')" class="px-3.5 py-2 rounded-xl text-sm font-semibold bg-obsidian-800 hover:bg-obsidian-800/80 text-yellow-400 border border-yellow-500/40 transition">
+                    Đăng Nhập
+                </button>
+                <button onclick="openAuthModal('register')" class="px-4 py-2 rounded-xl text-sm font-bold gold-gradient text-obsidian-950 shadow-md shadow-orange-500/20 hover:brightness-110 transition">
+                    Đăng Ký
+                </button>
+            </div>
+
+            <div id="user-panel" class="hidden items-center gap-2 sm:gap-3">
+                <!-- Hiển thị Số dư & Nút Nạp nhanh -->
+                <div class="flex items-center bg-obsidian-950 border border-yellow-500/30 rounded-xl p-1 pl-3 gap-2">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 leading-none">Số dư xu</span>
+                        <span id="header-balance" class="font-gaming font-bold text-sm sm:text-base text-yellow-400">0</span>
+                    </div>
+                    <button onclick="openWalletModal('deposit')" class="w-8 h-8 rounded-lg gold-gradient text-obsidian-950 flex items-center justify-center font-bold hover:scale-105 transition shadow" title="Nạp Xu">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- Nút Rút tiền -->
+                <button onclick="openWalletModal('withdraw')" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Rút Tiền
+                </button>
+
+                <!-- Thông tin User & VIP -->
+                <div class="flex items-center gap-2 bg-obsidian-800 px-2.5 py-1.5 rounded-xl border border-white/10">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-500 to-red-500 flex items-center justify-center font-bold text-xs text-white shadow">
+                        <i class="fa-solid fa-user-astronaut"></i>
+                    </div>
+                    <div class="hidden md:block text-left">
+                        <div class="flex items-center gap-1">
+                            <span id="header-username" class="text-xs font-bold text-white max-w-[90px] truncate">Player</span>
+                            <span id="header-vip" class="text-[10px] font-gaming font-bold px-1.5 rounded bg-yellow-500 text-obsidian-950">VIP 1</span>
+                        </div>
+                        <button onclick="logout()" class="text-[10px] text-red-400 hover:underline">Đăng xuất</button>
+                    </div>
+                    <button onclick="logout()" class="md:hidden text-gray-400 hover:text-red-400 p-1" title="Đăng xuất">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thanh chạy chữ thông báo (Marquee) -->
+        <div class="bg-obsidian-950 border-t border-white/5 py-1.5 px-4 flex items-center gap-3 overflow-hidden text-xs">
+            <span class="flex items-center gap-1 text-yellow-400 font-bold shrink-0 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+                <i class="fa-solid fa-bullhorn"></i> TIN HOT
+            </span>
+            <div class="overflow-hidden whitespace-nowrap w-full">
+                <div class="inline-block animate-marquee text-gray-300">
+                    🎉 Chào mừng tân thủ gia nhập <span class="text-yellow-400 font-bold">F168 VIP</span> — Đăng ký tài khoản mới nhận ngay <span class="text-emerald-400 font-bold">50,000 XU</span> trải nghiệm miễn phí! 🔥 Chúc mừng người chơi <span class="text-orange-400 font-semibold">HoangNam99</span> vừa nổ hũ <span class="text-yellow-300 font-bold">QUYẾT CHIẾN</span> thắng lớn <span class="text-yellow-400 font-bold">+1,250,000 XU</span>! 🎲 Phiên Tài Xỉu cân bảng đang diễn ra sôi động!
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6">
+
+        <!-- HERO BANNER & QUICK ACTIONS -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Banner Chính -->
+            <div class="lg:col-span-2 relative rounded-2xl overflow-hidden border border-yellow-500/30 bg-gradient-to-r from-[#1e130c] via-[#2c1810] to-[#161922] p-6 sm:p-8 flex flex-col justify-between min-h-[210px] shadow-2xl">
+                <div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none flex items-center justify-center">
+                    <i class="fa-solid fa-skull-crossbones text-[160px] text-yellow-500 rotate-12"></i>
+                </div>
+                <div class="relative z-10 space-y-2 max-w-lg">
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                        🔥 SIÊU PHẨM NỔ HŨ ĐỘC QUYỀN
+                    </span>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                        QUYẾT CHIẾN <span class="gold-text">TIỀN THƯỞNG</span>
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-300">
+                        Săn kho báu miền viễn tây với hệ số nhân lên tới <span class="text-yellow-400 font-bold">x50 lần</span>. Quay hũ mượt mà, thắng lớn tức thì!
+                    </p>
+                </div>
+                <div class="relative z-10 pt-4 flex flex-wrap items-center gap-3">
+                    <button onclick="launchGame('quyet-chien')" class="px-5 py-2.5 rounded-xl font-bold text-sm gold-gradient text-obsidian-950 shadow-lg shadow-orange-500/30 hover:scale-105 transition flex items-center gap-2 animate-pulse-glow">
+                        <i class="fa-solid fa-play"></i> CHƠI NGAY
+                    </button>
+                    <button onclick="openModal('quest-modal')" class="px-4 py-2.5 rounded-xl font-semibold text-sm bg-white/10 hover:bg-white/15 text-yellow-300 border border-yellow-400/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check"></i> Điểm Danh Nhận Quà
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cột Jackpot & Lối tắt Mobile -->
+            <div class="card-glass rounded-2xl p-5 flex flex-col justify-between border border-yellow-500/25 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-yellow-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> HŨ JACKPOT TÍCH LŨY
+                    </span>
+                    <span class="text-[11px] text-gray-400">Cập nhật trực tiếp</span>
+                </div>
+                <div class="my-3 bg-obsidian-950/90 border border-yellow-500/30 rounded-xl py-3 px-4 text-center shadow-inner">
+                    <div id="jackpot-counter" class="font-gaming font-bold text-2xl sm:text-3xl tracking-wider gold-text">
+                        88,450,200
+                    </div>
+                    <span class="text-[11px] text-gray-400">XU THƯỞNG HỆ THỐNG</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <button onclick="openWalletModal('deposit')" class="p-2.5 rounded-xl bg-obsidian-950 hover:bg-yellow-500/10 border border-white/10 hover:border-yellow-500/40 transition flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-wallet text-yellow-400 text-base"></i>
+                        <span class="text-[11px] font-semibold">Nạp Xu</span>
+                    </button>
+                    <button onclick="openWalletModal('withdraw')" class="p-2.5 rounded-xl bg-obsidian-950 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/40 transition flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-building-columns text-emerald-400 text-base"></i>
+                        <span class="text-[11px] font-semibold">Rút Tiền</span>
+                    </button>
+                    <button onclick="openModal('quest-modal')" class="p-2.5 rounded-xl bg-obsidian-950 hover:bg-orange-500/10 border border-white/10 hover:border-orange-500/40 transition flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-gift text-orange-400 text-base"></i>
+                        <span class="text-[11px] font-semibold">Nhiệm Vụ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DANH MỤC SẢNH GAME (FILTER TABS) -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 w-full sm:w-auto">
+                    <button onclick="switchLobbyTab('all')" data-tab="all" class="lobby-tab active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold gold-gradient text-obsidian-950 whitespace-nowrap transition">
+                        <i class="fa-solid fa-fire mr-1"></i> Tất Cả Game
+                    </button>
+                    <button onclick="switchLobbyTab('slot')" data-tab="slot" class="lobby-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-obsidian-800 text-gray-300 hover:text-white border border-white/5 whitespace-nowrap transition">
+                        <i class="fa-solid fa-gem mr-1 text-yellow-400"></i> Nổ Hũ / Slot
+                    </button>
+                    <button onclick="switchLobbyTab('minigame')" data-tab="minigame" class="lobby-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-obsidian-800 text-gray-300 hover:text-white border border-white/5 whitespace-nowrap transition">
+                        <i class="fa-solid fa-dice mr-1 text-red-400"></i> Mini Game
+                    </button>
+                    <button onclick="switchLobbyTab('card')" data-tab="card" class="lobby-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-obsidian-800 text-gray-300 hover:text-white border border-white/5 whitespace-nowrap transition">
+                        <i class="fa-solid fa-spade mr-1 text-purple-400"></i> Game Bài
+                    </button>
+                    <button onclick="switchLobbyTab('fish')" data-tab="fish" class="lobby-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-obsidian-800 text-gray-300 hover:text-white border border-white/5 whitespace-nowrap transition">
+                        <i class="fa-solid fa-fish-fins mr-1 text-cyan-400"></i> Bắn Cá & Thể Thao
+                    </button>
+                </div>
+
+                <!-- Thanh tìm kiếm nhanh -->
+                <div class="relative w-full sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="game-search" oninput="filterGames()" placeholder="Tìm kiếm trò chơi..." class="w-full bg-obsidian-800 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50">
+                </div>
+            </div>
+
+            <!-- LƯỚI HIỂN THỊ GAME -->
+            <div id="games-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                <!-- Nội dung được render tự động bằng JS -->
+            </div>
+        </section>
+
+        <!-- KHU VỰC VINH DANH & BẢNG XẾP HẠNG NHANH -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+            <!-- Bảng Xếp Hạng Đại Gia -->
+            <div class="card-glass rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-base sm:text-lg flex items-center gap-2 text-yellow-400">
+                        <i class="fa-solid fa-ranking-star"></i> TOP CAO THỦ TUẦN
+                    </h2>
+                    <button onclick="openModal('leaderboard-modal')" class="text-xs text-gray-400 hover:text-yellow-400">Xem tất cả <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                </div>
+                <div id="mini-leaderboard" class="space-y-2.5">
+                    <!-- Render bằng JS -->
+                </div>
+            </div>
+
+            <!-- Lịch sử nổ hũ / thắng gần đây -->
+            <div class="card-glass rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-base sm:text-lg flex items-center gap-2 text-orange-400">
+                        <i class="fa-solid fa-bolt"></i> PHIÊN THẮNG LỚN TRỰC TIẾP
+                    </h2>
+                    <span class="text-[11px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Live Feed</span>
+                </div>
+                <div id="live-wins-feed" class="space-y-2.5 max-h-[215px] overflow-y-auto pr-1">
+                    <!-- Render bằng JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-obsidian-900 border-t border-white/10 mt-10 py-6 px-4 text-center text-xs text-gray-500 space-y-2">
+        <div class="flex items-center justify-center gap-2 text-yellow-500 font-gaming font-bold text-base">
+            <i class="fa-solid fa-crown"></i> F168 VIP ENTERTAINMENT
+        </div>
+        <p>Hệ thống mô phỏng cổng giải trí trực tuyến sử dụng xu ảo miễn phí. Dữ liệu được lưu trữ cục bộ trên trình duyệt của bạn.</p>
+        <p class="text-gray-600">© 2026 F168 VIP Demo. Dành cho mục đích giải trí lành mạnh.</p>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- KHU VỰC CÁC GAME CHƠI TRỰC TIẾP (FULLSCREEN OVERLAY MODALS)           -->
+    <!-- ===================================================================== -->
+
+    <!-- 1. GAME NỔ HŨ: QUYẾT CHIẾN TIỀN THƯỞNG -->
+    <div id="game-quyet-chien" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="relative w-full max-w-2xl bg-gradient-to-b from-[#2b140e] via-[#1a0d0a] to-[#0f0a09] border-2 border-yellow-500/60 rounded-3xl shadow-2xl overflow-hidden my-auto">
+            <!-- Header Game -->
+            <div class="bg-black/50 px-4 py-3 flex items-center justify-between border-b border-yellow-500/30">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-lg gold-gradient text-obsidian-950 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-hat-cowboy"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-gaming font-bold text-base sm:text-lg gold-text leading-none">QUYẾT CHIẾN TIỀN THƯỞNG</h3>
+                        <span class="text-[10px] text-orange-300">Quay liên tiếp để tăng hệ số nhân x1 → x5!</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-obsidian-950/90 px-3 py-1 rounded-xl border border-yellow-500/40 text-right">
+                        <span class="text-[9px] text-gray-400 block">SỐ DƯ CỦA BẠN</span>
+                        <span class="game-user-balance font-gaming font-bold text-sm text-yellow-400">0</span>
+                    </div>
+                    <button onclick="closeGame('quyet-chien')" class="w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Thanh Hệ Số Nhân (Multiplier Bar) -->
+            <div class="bg-black/40 py-2 px-4 flex items-center justify-center gap-2 sm:gap-4 border-b border-white/5">
+                <span class="text-xs text-gray-400 font-semibold">HỆ SỐ NHÂN:</span>
+                <div id="qc-multipliers" class="flex items-center gap-2">
+                    <span data-mult="1" class="qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-yellow-500 text-obsidian-950 shadow">x1</span>
+                    <span data-mult="2" class="qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-white/10 text-gray-400">x2</span>
+                    <span data-mult="3" class="qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-white/10 text-gray-400">x3</span>
+                    <span data-mult="5" class="qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-white/10 text-gray-400">x5</span>
+                </div>
+            </div>
+
+            <!-- Khung Cuộn Quay 5x3 -->
+            <div class="p-4 sm:p-6 relative">
+                <!-- Hiệu ứng thông báo thắng lớn overlay -->
+                <div id="qc-win-banner" class="hidden absolute inset-0 z-20 bg-black/75 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
+                    <div class="text-yellow-400 text-4xl sm:text-5xl mb-2 animate-bounce"><i class="fa-solid fa-trophy"></i></div>
+                    <h4 id="qc-win-title" class="font-gaming font-extrabold text-2xl sm:text-4xl gold-text uppercase">THẮNG LỚN!</h4>
+                    <p id="qc-win-amount" class="font-gaming font-bold text-3xl sm:text-5xl text-emerald-400 mt-1">+50,000 XU</p>
+                </div>
+
+                <div class="bg-obsidian-950/95 p-3 sm:p-4 rounded-2xl border-2 border-yellow-600/50 shadow-inner">
+                    <div id="qc-grid" class="grid grid-cols-5 gap-2 sm:gap-3">
+                        <!-- 15 ô biểu tượng render bằng JS -->
+                    </div>
+                </div>
+
+                <!-- Bảng trả thưởng thu gọn -->
+                <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-[11px] text-gray-400 bg-black/30 py-2 px-3 rounded-xl">
+                    <span>💀 Đầu Lâu: <b class="text-yellow-400">x10</b></span>
+                    <span>🔫 Súng Lục: <b class="text-yellow-400">x6</b></span>
+                    <span>🎸 Đàn Guitar: <b class="text-yellow-400">x4</b></span>
+                    <span>🤠 Mũ Cao Bồi: <b class="text-yellow-400">x3</b></span>
+                    <span>💎 Đá Quý: <b class="text-yellow-400">x2</b></span>
+                    <span class="text-emerald-400">(Khớp ≥3 biểu tượng trên hàng ngang)</span>
+                </div>
+            </div>
+
+            <!-- Bảng Điều Khiển Đặt Cược & Quay -->
+            <div class="bg-black/60 p-4 border-t border-yellow-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <!-- Chọn mức cược -->
+                <div class="flex items-center gap-2 bg-obsidian-900 px-3 py-2 rounded-xl border border-white/10 w-full sm:w-auto justify-between">
+                    <button onclick="changeQcBet(-1)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold">-</button>
+                    <div class="text-center px-3">
+                        <span class="text-[10px] text-gray-400 block">MỨC CƯỢC</span>
+                        <span id="qc-bet-display" class="font-gaming font-bold text-base text-yellow-400">1,000</span>
+                    </div>
+                    <button onclick="changeQcBet(1)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold">+</button>
+                </div>
+
+                <!-- Kết quả lượt quay vừa rồi -->
+                <div class="text-center">
+                    <span class="text-[10px] text-gray-400 block">THẮNG LƯỢT NÀY</span>
+                    <span id="qc-last-win" class="font-gaming font-bold text-lg text-emerald-400">0</span>
+                </div>
+
+                <!-- Nút Quay & Tự Động -->
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                    <button id="qc-auto-btn" onclick="toggleQcAuto()" class="px-4 py-3 rounded-xl font-bold text-xs bg-obsidian-800 hover:bg-obsidian-700 text-yellow-400 border border-yellow-500/40 transition">
+                        <i class="fa-solid fa-rotate mr-1"></i> TỰ QUAY
+                    </button>
+                    <button id="qc-spin-btn" onclick="spinQuyetChien()" class="flex-1 sm:flex-initial px-7 py-3 rounded-xl font-gaming font-extrabold text-base gold-gradient text-obsidian-950 shadow-lg shadow-orange-500/40 hover:scale-105 active:scale-95 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> QUAY NGAY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. GAME TÀI XỈU CÂN BẢNG -->
+    <div id="game-tai-xiu" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="relative w-full max-w-2xl bg-gradient-to-b from-[#132a1c] via-[#0d1f15] to-[#08120c] border-2 border-emerald-500/50 rounded-3xl shadow-2xl overflow-hidden my-auto">
+            <!-- Header -->
+            <div class="bg-black/50 px-4 py-3 flex items-center justify-between border-b border-emerald-500/30">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-500 text-obsidian-950 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-dice"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-gaming font-bold text-base sm:text-lg text-emerald-400 leading-none">TÀI XỈU HOÀNG GIA</h3>
+                        <span class="text-[10px] text-gray-300">Tỷ lệ ăn 1 : 1.98 — Lắc xanh chín</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-obsidian-950/90 px-3 py-1 rounded-xl border border-yellow-500/40 text-right">
+                        <span class="text-[9px] text-gray-400 block">SỐ DƯ CỦA BẠN</span>
+                        <span class="game-user-balance font-gaming font-bold text-sm text-yellow-400">0</span>
+                    </div>
+                    <button onclick="closeGame('tai-xiu')" class="w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bàn Cược Tài Xỉu -->
+            <div class="p-4 sm:p-6 space-y-5">
+                <div class="grid grid-cols-3 items-center gap-2 sm:gap-4">
+                    <!-- Cửa TÀI -->
+                    <div onclick="selectTxSide('TAI')" id="tx-box-TAI" class="cursor-pointer rounded-2xl p-4 text-center border-2 border-white/10 bg-black/40 hover:border-yellow-400 transition relative">
+                        <h4 class="font-gaming font-extrabold text-2xl sm:text-4xl text-yellow-400">TÀI</h4>
+                        <span class="text-[11px] text-gray-400 block mt-1">11 - 17 Điểm</span>
+                        <div class="mt-3 bg-obsidian-950/80 rounded-lg py-1 px-2 border border-yellow-500/20">
+                            <span class="text-[10px] text-gray-400 block">Cược của bạn</span>
+                            <span id="tx-bet-TAI" class="font-gaming font-bold text-sm text-white">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Bát Đĩa Xúc Xắc ở Giữa -->
+                    <div class="flex flex-col items-center justify-center relative">
+                        <div id="tx-plate" class="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-b from-gray-200 to-gray-400 border-4 border-yellow-500 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                            <!-- 3 Viên Xúc Xắc -->
+                            <div id="tx-dice-container" class="flex flex-wrap items-center justify-center gap-1.5 p-2">
+                                <span class="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl shadow-md flex items-center justify-center text-red-600 font-bold text-xl border border-gray-300">6</span>
+                                <span class="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl shadow-md flex items-center justify-center text-obsidian-950 font-bold text-xl border border-gray-300">5</span>
+                                <span class="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl shadow-md flex items-center justify-center text-red-600 font-bold text-xl border border-gray-300">4</span>
+                            </div>
+                            <!-- Nắp Bát Úp -->
+                            <div id="tx-bowl" class="bowl-cover bowl-open absolute inset-0 rounded-full bg-gradient-to-tr from-amber-800 via-yellow-600 to-amber-500 border-4 border-yellow-300 flex items-center justify-center shadow-inner">
+                                <span class="font-gaming font-bold text-xs text-yellow-100 tracking-widest">F168</span>
+                            </div>
+                        </div>
+                        <div id="tx-result-text" class="mt-2 font-gaming font-bold text-xs sm:text-sm text-emerald-300 bg-black/50 px-3 py-1 rounded-full">
+                            TÀI (15 Điểm)
+                        </div>
+                    </div>
+
+                    <!-- Cửa XỈU -->
+                    <div onclick="selectTxSide('XIU')" id="tx-box-XIU" class="cursor-pointer rounded-2xl p-4 text-center border-2 border-white/10 bg-black/40 hover:border-cyan-400 transition relative">
+                        <h4 class="font-gaming font-extrabold text-2xl sm:text-4xl text-cyan-400">XỈU</h4>
+                        <span class="text-[11px] text-gray-400 block mt-1">4 - 10 Điểm</span>
+                        <div class="mt-3 bg-obsidian-950/80 rounded-lg py-1 px-2 border border-cyan-500/20">
+                            <span class="text-[10px] text-gray-400 block">Cược của bạn</span>
+                            <span id="tx-bet-XIU" class="font-gaming font-bold text-sm text-white">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chọn Phỉnh Cược (Chips) -->
+                <div class="bg-black/40 p-3 rounded-2xl border border-white/10 space-y-3">
+                    <div class="flex items-center justify-between text-xs text-gray-400 px-1">
+                        <span>Chọn cửa Tài/Xỉu rồi bấm phỉnh để đặt cược:</span>
+                        <button onclick="clearTxBet()" class="text-red-400 hover:underline">Xóa cược</button>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2">
+                        <button onclick="addTxChip(1000)" class="py-2 rounded-xl font-gaming font-bold text-xs bg-blue-600/30 hover:bg-blue-600 border border-blue-400 text-white transition">+1K</button>
+                        <button onclick="addTxChip(5000)" class="py-2 rounded-xl font-gaming font-bold text-xs bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-400 text-white transition">+5K</button>
+                        <button onclick="addTxChip(10000)" class="py-2 rounded-xl font-gaming font-bold text-xs bg-yellow-600/30 hover:bg-yellow-600 border border-yellow-400 text-white transition">+10K</button>
+                        <button onclick="addTxChip(50000)" class="py-2 rounded-xl font-gaming font-bold text-xs bg-orange-600/30 hover:bg-orange-600 border border-orange-400 text-white transition">+50K</button>
+                        <button onclick="addTxChip('ALL')" class="py-2 rounded-xl font-gaming font-bold text-xs bg-red-600/30 hover:bg-red-600 border border-red-400 text-white transition">TẤT TAY</button>
+                    </div>
+                </div>
+
+                <!-- Bảng Lịch Sử Cầu (Soi Cầu) -->
+                <div class="flex items-center justify-between bg-black/50 px-4 py-2.5 rounded-xl border border-white/5">
+                    <span class="text-xs text-gray-400 font-semibold shrink-0 mr-2">Soi Cầu:</span>
+                    <div id="tx-history-dots" class="flex items-center gap-1.5 overflow-x-auto">
+                        <!-- Render chấm đen (Tài) / trắng (Xỉu) -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nút Lắc Xúc Xắc -->
+            <div class="bg-black/60 p-4 border-t border-emerald-500/30 flex justify-center">
+                <button id="tx-roll-btn" onclick="rollTaiXiu()" class="w-full sm:w-auto px-10 py-3.5 rounded-xl font-gaming font-extrabold text-base bg-gradient-to-r from-emerald-500 to-teal-400 text-obsidian-950 shadow-lg shadow-emerald-500/30 hover:scale-105 active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-dice-d20"></i> LẮC XÚC XẮC & MỞ BÁT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. GAME VÒNG QUAY MAY MẮN -->
+    <div id="game-vong-quay" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="relative w-full max-w-lg bg-gradient-to-b from-[#231538] via-[#150d24] to-[#0b0714] border-2 border-purple-500/50 rounded-3xl shadow-2xl overflow-hidden my-auto">
+            <!-- Header -->
+            <div class="bg-black/50 px-4 py-3 flex items-center justify-between border-b border-purple-500/30">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-dharmachakra"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-gaming font-bold text-base sm:text-lg text-purple-300 leading-none">VÒNG QUAY MAY MẮN</h3>
+                        <span class="text-[10px] text-gray-400">Thử vận may nhân tới x10 lần cược</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-obsidian-950/90 px-3 py-1 rounded-xl border border-yellow-500/40 text-right">
+                        <span class="text-[9px] text-gray-400 block">SỐ DƯ</span>
+                        <span class="game-user-balance font-gaming font-bold text-sm text-yellow-400">0</span>
+                    </div>
+                    <button onclick="closeGame('vong-quay')" class="w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vòng Quay Canvas -->
+            <div class="p-6 flex flex-col items-center justify-center relative">
+                <!-- Kim chỉ thị -->
+                <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[26px] border-t-yellow-400 drop-shadow-lg z-10 -mb-3"></div>
+                <div class="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(168,85,247,0.5)] overflow-hidden bg-obsidian-950">
+                    <canvas id="lucky-wheel-canvas" width="300" height="300" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <!-- Điều khiển vòng quay -->
+            <div class="bg-black/60 p-4 border-t border-purple-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400">Vé quay:</span>
+                    <select id="wheel-bet-select" class="bg-obsidian-900 border border-purple-400/40 rounded-xl px-3 py-2 text-sm font-gaming font-bold text-yellow-400 focus:outline-none">
+                        <option value="2000">2,000 XU</option>
+                        <option value="5000">5,000 XU</option>
+                        <option value="10000">10,000 XU</option>
+                        <option value="50000">50,000 XU</option>
+                    </select>
+                </div>
+                <button id="wheel-spin-btn" onclick="spinLuckyWheel()" class="w-full sm:w-auto px-8 py-3 rounded-xl font-gaming font-extrabold text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/40 hover:scale-105 transition">
+                    <i class="fa-solid fa-play mr-1"></i> QUAY VÒNG MAY MẮN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- CÁC MODAL CHỨC NĂNG: ĐĂNG NHẬP/ĐĂNG KÝ, VÍ NẠP/RÚT, NHIỆM VỤ, LỊCH SỬ -->
+    <!-- ===================================================================== -->
+
+    <!-- MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
+    <div id="auth-modal" class="fixed inset-0 z-[70] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-glass w-full max-w-md rounded-3xl p-6 border border-yellow-500/30 shadow-2xl relative">
+            <button onclick="closeModal('auth-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-2xl gold-gradient text-obsidian-950 flex items-center justify-center text-2xl mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <h3 id="auth-modal-title" class="text-xl font-bold text-white">Đăng Nhập F168 VIP</h3>
+                <p class="text-xs text-gray-400 mt-1">Đăng ký mới nhận ngay <span class="text-yellow-400 font-bold">50,000 XU</span> tân thủ!</p>
+            </div>
+
+            <!-- Tabs chuyển đổi -->
+            <div class="grid grid-cols-2 bg-obsidian-950 p-1 rounded-xl mb-5 border border-white/10">
+                <button id="tab-login" onclick="switchAuthTab('login')" class="py-2 rounded-lg text-xs font-bold gold-gradient text-obsidian-950 transition">Đăng Nhập</button>
+                <button id="tab-register" onclick="switchAuthTab('register')" class="py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">Đăng Ký Mới</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Tên tài khoản</label>
+                    <input type="text" id="auth-username" required minlength="3" maxlength="16" placeholder="Nhập tên đăng nhập (VD: DaiGia88)" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Mật khẩu</label>
+                    <input type="password" id="auth-password" required minlength="4" placeholder="Nhập mật khẩu" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-500">
+                </div>
+                <div id="register-extra" class="hidden">
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Mã giới thiệu (Tùy chọn)</label>
+                    <input type="text" placeholder="Nhập mã F168VIP để nhận ưu đãi" value="F168VIP" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-yellow-400 focus:outline-none">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full py-3 rounded-xl font-bold text-sm gold-gradient text-obsidian-950 shadow-lg shadow-orange-500/20 hover:brightness-110 transition">
+                    ĐĂNG NHẬP NGAY
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL VÍ TIỀN (NẠP XU & RÚT TIỀN) -->
+    <div id="wallet-modal" class="fixed inset-0 z-[70] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="card-glass w-full max-w-lg rounded-3xl p-6 border border-yellow-500/30 shadow-2xl relative my-auto">
+            <button onclick="closeModal('wallet-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="flex items-center justify-between mb-5 pr-6">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-yellow-400"></i> Trung Tâm Giao Dịch
+                </h3>
+                <div class="text-right">
+                    <span class="text-[10px] text-gray-400 block">Số dư hiện tại</span>
+                    <span id="wallet-modal-balance" class="font-gaming font-bold text-sm text-yellow-400">0 XU</span>
+                </div>
+            </div>
+
+            <!-- Tabs Nạp / Rút -->
+            <div class="grid grid-cols-2 bg-obsidian-950 p-1 rounded-xl mb-5 border border-white/10">
+                <button id="wallet-tab-deposit" onclick="switchWalletTab('deposit')" class="py-2 rounded-lg text-xs font-bold gold-gradient text-obsidian-950 transition">
+                    <i class="fa-solid fa-circle-arrow-down mr-1"></i> Nạp Xu Nhanh
+                </button>
+                <button id="wallet-tab-withdraw" onclick="switchWalletTab('withdraw')" class="py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-circle-arrow-up mr-1"></i> Rút Tiền Về Bank
+                </button>
+            </div>
+
+            <!-- FORM NẠP TIỀN -->
+            <form id="deposit-form" onsubmit="handleDeposit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1.5">Phương thức thanh toán</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="dep-method" value="Chuyển khoản Ngân hàng (QR)" checked class="peer hidden">
+                            <div class="p-2.5 rounded-xl bg-obsidian-950 border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-500/10 text-center text-xs font-semibold">
+                                <i class="fa-solid fa-qrcode text-yellow-400 block text-base mb-1"></i> Ngân Hàng QR
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="dep-method" value="Ví MoMo / ZaloPay" class="peer hidden">
+                            <div class="p-2.5 rounded-xl bg-obsidian-950 border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-500/10 text-center text-xs font-semibold">
+                                <i class="fa-solid fa-mobile-screen-button text-pink-400 block text-base mb-1"></i> Ví Điện Tử
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="dep-method" value="Thẻ Cào Điện Thoại" class="peer hidden">
+                            <div class="p-2.5 rounded-xl bg-obsidian-950 border border-white/10 peer-checked:border-emerald-400 peer-checked:bg-emerald-500/10 text-center text-xs font-semibold">
+                                <i class="fa-solid fa-sim-card text-emerald-400 block text-base mb-1"></i> Thẻ Cào
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1.5">Chọn gói xu nạp nhanh</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="setDepositAmount(50000)" class="py-2 rounded-lg bg-obsidian-950 hover:bg-yellow-500/20 border border-white/10 text-xs font-gaming font-bold text-yellow-400">50,000</button>
+                        <button type="button" onclick="setDepositAmount(100000)" class="py-2 rounded-lg bg-obsidian-950 hover:bg-yellow-500/20 border border-white/10 text-xs font-gaming font-bold text-yellow-400">100,000</button>
+                        <button type="button" onclick="setDepositAmount(500000)" class="py-2 rounded-lg bg-obsidian-950 hover:bg-yellow-500/20 border border-white/10 text-xs font-gaming font-bold text-yellow-400">500,000</button>
+                        <button type="button" onclick="setDepositAmount(1000000)" class="py-2 rounded-lg bg-obsidian-950 hover:bg-yellow-500/20 border border-white/10 text-xs font-gaming font-bold text-yellow-400">1,000,000</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1">Số xu muốn nạp</label>
+                    <input type="number" id="deposit-amount" required min="10000" max="50000000" value="100000" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 font-gaming font-bold text-base text-yellow-400 focus:outline-none focus:border-yellow-500">
+                </div>
+
+                <!-- Khu vực mã QR mô phỏng -->
+                <div class="bg-obsidian-950 p-3 rounded-xl border border-dashed border-yellow-500/40 flex items-center gap-3">
+                    <div class="w-16 h-16 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center text-obsidian-950">
+                        <i class="fa-solid fa-qrcode text-4xl"></i>
+                    </div>
+                    <div class="text-xs space-y-0.5">
+                        <p class="font-bold text-yellow-400">MÃ GIAO DỊCH TỰ ĐỘNG</p>
+                        <p class="text-gray-400">Ngân hàng: <b class="text-white">MB BANK - 9999168168</b></p>
+                        <p class="text-gray-400">Nội dung: <b id="deposit-memo" class="text-emerald-400">NAP F168</b></p>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl font-bold text-sm gold-gradient text-obsidian-950 shadow-lg hover:brightness-110 transition">
+                    XÁC NHẬN ĐÃ CHUYỂN & CỘNG XU TỨC THÌ
+                </button>
+            </form>
+
+            <!-- FORM RÚT TIỀN -->
+            <form id="withdraw-form" onsubmit="handleWithdraw(event)" class="hidden space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1">Chọn ngân hàng nhận tiền</label>
+                    <select id="withdraw-bank" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="Vietcombank">Vietcombank (VCB)</option>
+                        <option value="MB Bank">MB Bank (Quân Đội)</option>
+                        <option value="Techcombank">Techcombank (TCB)</option>
+                        <option value="ACB">Ngân hàng Á Châu (ACB)</option>
+                        <option value="BIDV">BIDV</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1">Số tài khoản ngân hàng</label>
+                    <input type="text" id="withdraw-account" required minlength="6" maxlength="20" placeholder="Nhập số tài khoản nhận tiền" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-300 mb-1">Số xu muốn rút (Tối thiểu 50,000)</label>
+                    <input type="number" id="withdraw-amount" required min="50000" placeholder="Nhập số xu cần rút" class="w-full bg-obsidian-950 border border-white/15 rounded-xl px-4 py-2.5 font-gaming font-bold text-base text-emerald-400 focus:outline-none focus:border-emerald-500">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-obsidian-950 shadow-lg hover:brightness-110 transition">
+                    GỬI LỆNH RÚT TIỀN
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NHIỆM VỤ TÂN THỦ & ĐIỂM DANH -->
+    <div id="quest-modal" class="fixed inset-0 z-[70] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="card-glass w-full max-w-lg rounded-3xl p-6 border border-yellow-500/30 shadow-2xl relative my-auto">
+            <button onclick="closeModal('quest-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="mb-5">
+                <h3 class="text-lg font-bold text-yellow-400 flex items-center gap-2">
+                    <i class="fa-solid fa-gift"></i> Nhiệm Vụ Tân Thủ & Điểm Danh
+                </h3>
+                <p class="text-xs text-gray-400 mt-1">Hoàn thành các mốc nhiệm vụ bên dưới để nhận xu miễn phí mỗi ngày!</p>
+            </div>
+
+            <div id="quest-list" class="space-y-3">
+                <!-- Danh sách nhiệm vụ render tự động -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BẢNG XẾP HẠNG -->
+    <div id="leaderboard-modal" class="fixed inset-0 z-[70] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-glass w-full max-w-lg rounded-3xl p-6 border border-yellow-500/30 shadow-2xl relative">
+            <button onclick="closeModal('leaderboard-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-bold text-yellow-400 flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-trophy"></i> Bảng Xếp Hạng Đại Gia F168
+            </h3>
+            <div id="full-leaderboard" class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Render bằng JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LỊCH SỬ CƯỢC & GIAO DỊCH -->
+    <div id="history-modal" class="fixed inset-0 z-[70] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-glass w-full max-w-2xl rounded-3xl p-6 border border-yellow-500/30 shadow-2xl relative">
+            <button onclick="closeModal('history-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Lịch Sử Giao Dịch & Cược Game
+            </h3>
+            <div id="history-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1 text-xs">
+                <!-- Render bằng JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT LOGIC TOÀN DIỆN                                            -->
+    <!-- ===================================================================== -->
+    <script>
+        // --- 1. HỆ THỐNG ÂM THANH TỔNG HỢP (TONE.JS) ---
+        let soundEnabled = true;
+        let synth = null;
+
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -10;
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (!synth) return;
+                if (Tone.context.state !== 'running') Tone.start();
+
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "32n");
+                } else if (type === 'spin') {
+                    synth.triggerAttackRelease("E4", "16n");
+                } else if (type === 'win') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C5", "16n", now);
+                    synth.triggerAttackRelease("E5", "16n", now + 0.08);
+                    synth.triggerAttackRelease("G5", "16n", now + 0.16);
+                    synth.triggerAttackRelease("C6", "8n", now + 0.24);
+                } else if (type === 'coin') {
+                    synth.triggerAttackRelease("B5", "32n");
+                }
+            } catch (e) {
+                // Bỏ qua lỗi audio nếu trình duyệt chặn autoplay
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-btn');
+            btn.innerHTML = soundEnabled
+                ? '<i class="fa-solid fa-volume-high text-emerald-400"></i>'
+                : '<i class="fa-solid fa-volume-xmark text-red-400"></i>';
+            showToast(soundEnabled ? "Đã bật âm thanh hiệu ứng" : "Đã tắt âm thanh", "info");
+        }
+
+        // --- 2. DỮ LIỆU DANH SÁCH GAME TRONG SẢNH ---
+        const GAMES_CATALOG = [
+            {
+                id: 'quyet-chien',
+                name: 'Quyết Chiến Tiền Thưởng',
+                category: 'slot',
+                tag: 'HOT NHẤT',
+                tagColor: 'bg-red-600',
+                icon: 'fa-hat-cowboy',
+                gradient: 'from-amber-600 via-orange-700 to-red-900',
+                players: '12,480',
+                playable: true
+            },
+            {
+                id: 'tai-xiu',
+                name: 'Tài Xỉu Hoàng Gia',
+                category: 'minigame',
+                tag: 'CÂN BẢNG',
+                tagColor: 'bg-emerald-600',
+                icon: 'fa-dice',
+                gradient: 'from-emerald-600 via-teal-700 to-slate-900',
+                players: '18,920',
+                playable: true
+            },
+            {
+                id: 'vong-quay',
+                name: 'Vòng Quay May Mắn',
+                category: 'minigame',
+                tag: 'NHÂN x10',
+                tagColor: 'bg-purple-600',
+                icon: 'fa-dharmachakra',
+                gradient: 'from-purple-600 via-indigo-700 to-slate-900',
+                players: '6,310',
+                playable: true
+            },
+            {
+                id: 'kho-bau-aztec',
+                name: 'Kho Báu Aztec',
+                category: 'slot',
+                tag: 'NỔ HŨ',
+                tagColor: 'bg-yellow-600',
+                icon: 'fa-mask',
+                gradient: 'from-yellow-500 via-amber-700 to-stone-900',
+                players: '9,140',
+                playable: false,
+                redirectGame: 'quyet-chien'
+            },
+            {
+                id: 'tien-len',
+                name: 'Tiến Lên Miền Nam',
+                category: 'card',
+                tag: 'ĐÔNG VUI',
+                tagColor: 'bg-blue-600',
+                icon: 'fa-spade',
+                gradient: 'from-blue-600 via-indigo-800 to-slate-900',
+                players: '7,540',
+                playable: false,
+                redirectGame: 'tai-xiu'
+            },
+            {
+                id: 'poker-texas',
+                name: 'Mini Poker VIP',
+                category: 'card',
+                tag: 'MỚI',
+                tagColor: 'bg-pink-600',
+                icon: 'fa-heart',
+                gradient: 'from-rose-600 via-pink-800 to-slate-900',
+                players: '4,210',
+                playable: false,
+                redirectGame: 'vong-quay'
+            },
+            {
+                id: 'ban-ca-long-vuong',
+                name: 'Bắn Cá Long Vương',
+                category: 'fish',
+                tag: 'SĂN BOSS',
+                tagColor: 'bg-cyan-600',
+                icon: 'fa-dragon',
+                gradient: 'from-cyan-500 via-blue-700 to-slate-900',
+                players: '8,890',
+                playable: false,
+                redirectGame: 'quyet-chien'
+            },
+            {
+                id: 'baccarat',
+                name: 'Baccarat Trực Tuyến',
+                category: 'card',
+                tag: 'CASINO',
+                tagColor: 'bg-amber-600',
+                icon: 'fa-crown',
+                gradient: 'from-amber-500 via-yellow-800 to-neutral-900',
+                players: '5,670',
+                playable: false,
+                redirectGame: 'tai-xiu'
+            },
+            {
+                id: 'duong-mat-chac',
+                name: 'Đường Mạt Chược 2',
+                category: 'slot',
+                tag: 'SIÊU HOT',
+                tagColor: 'bg-red-600',
+                icon: 'fa-chess-rook',
+                gradient: 'from-emerald-500 via-green-800 to-neutral-900',
+                players: '11,200',
+                playable: false,
+                redirectGame: 'quyet-chien'
+            },
+            {
+                id: 'the-thao-saba',
+                name: 'Thể Thao SABA 24/7',
+                category: 'fish',
+                tag: 'KÈO THƠM',
+                tagColor: 'bg-orange-600',
+                icon: 'fa-futbol',
+                gradient: 'from-orange-500 via-red-700 to-slate-900',
+                players: '14,100',
+                playable: false,
+                redirectGame: 'vong-quay'
+            }
+        ];
+
+        // --- 3. QUẢN LÝ TRẠNG THÁI NGƯỜI DÙNG (LOCALSTORAGE) ---
+        const STORAGE_KEY = 'f168_vip_state_v1';
+
+        let appState = {
+            currentUser: null, // { username, password, balance, vip, gamesPlayed, totalDeposited, questsClaimed: [], history: [] }
+            usersDB: {}
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    appState = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error("Lỗi đọc dữ liệu:", e);
+            }
+            updateUI();
+        }
+
+        function saveState() {
+            try {
+                if (appState.currentUser) {
+                    // Tính toán cấp độ VIP tự động theo tổng nạp hoặc số dư
+                    const u = appState.currentUser;
+                    if (u.totalDeposited >= 2000000 || u.balance >= 3000000) u.vip = 5;
+                    else if (u.totalDeposited >= 1000000 || u.balance >= 1500000) u.vip = 4;
+                    else if (u.totalDeposited >= 500000 || u.balance >= 700000) u.vip = 3;
+                    else if (u.totalDeposited >= 100000 || u.balance >= 200000) u.vip = 2;
+                    else u.vip = 1;
+
+                    appState.usersDB[u.username.toLowerCase()] = u;
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Lỗi lưu dữ liệu:", e);
+            }
+            updateUI();
+        }
+
+        function formatCoins(num) {
+            return Math.floor(num).toLocaleString('vi-VN');
+        }
+
+        function addHistoryLog(type, title, amount, isPositive) {
+            if (!appState.currentUser) return;
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${now.getDate()}/${now.getMonth() + 1}`;
+            appState.currentUser.history.unshift({
+                type,
+                title,
+                amount,
+                isPositive,
+                time: timeStr
+            });
+            if (appState.currentUser.history.length > 50) {
+                appState.currentUser.history.pop();
+            }
+        }
+
+        // --- 4. HỆ THỐNG THÔNG BÁO TOAST ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-emerald-950/95 border-emerald-500 text-emerald-200',
+                error: 'bg-red-950/95 border-red-500 text-red-200',
+                warning: 'bg-amber-950/95 border-yellow-500 text-yellow-200',
+                info: 'bg-slate-900/95 border-blue-400 text-blue-200'
+            };
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                error: 'fa-circle-exclamation text-red-400',
+                warning: 'fa-triangle-exclamation text-yellow-400',
+                info: 'fa-circle-info text-blue-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl text-xs sm:text-sm font-medium transition-all duration-300 transform translate-x-0 ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} text-base shrink-0"></i>
+                <span class="flex-1">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // --- 5. ĐĂNG KÝ / ĐĂNG NHẬP / ĐĂNG XUẤT ---
+        let currentAuthMode = 'login';
+
+        function openAuthModal(mode = 'login') {
+            switchAuthTab(mode);
+            openModal('auth-modal');
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const tabLogin = document.getElementById('tab-login');
+            const tabReg = document.getElementById('tab-register');
+            const title = document.getElementById('auth-modal-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const regExtra = document.getElementById('register-extra');
+
+            if (mode === 'login') {
+                tabLogin.className = 'py-2 rounded-lg text-xs font-bold gold-gradient text-obsidian-950 transition';
+                tabReg.className = 'py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                title.textContent = 'Đăng Nhập F168 VIP';
+                submitBtn.textContent = 'ĐĂNG NHẬP NGAY';
+                regExtra.classList.add('hidden');
+            } else {
+                tabReg.className = 'py-2 rounded-lg text-xs font-bold gold-gradient text-obsidian-950 transition';
+                tabLogin.className = 'py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                title.textContent = 'Đăng Ký Tài Khoản Mới';
+                submitBtn.textContent = 'ĐĂNG KÝ & NHẬN 50,000 XU';
+                regExtra.classList.remove('hidden');
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('auth-username').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const key = username.toLowerCase();
+
+            if (currentAuthMode === 'register') {
+                if (appState.usersDB[key]) {
+                    showToast('Tên tài khoản đã tồn tại, vui lòng chọn tên khác!', 'error');
+                    return;
+                }
+                const newUser = {
+                    username: username,
+                    password: password,
+                    balance: 50000, // Tặng sẵn 50,000 xu trải nghiệm
+                    vip: 1,
+                    gamesPlayed: 0,
+                    totalDeposited: 0,
+                    questsClaimed: [],
+                    history: []
+                };
+                appState.usersDB[key] = newUser;
+                appState.currentUser = newUser;
+                addHistoryLog('BONUS', 'Quà tặng đăng ký tài khoản tân thủ', 50000, true);
+                saveState();
+                closeModal('auth-modal');
+                playSound('win');
+                showToast(`Chào mừng ${username}! Bạn nhận được +50,000 XU tân thủ!`, 'success');
+            } else {
+                const user = appState.usersDB[key];
+                if (!user) {
+                    showToast('Tài khoản không tồn tại. Hãy bấm tab Đăng Ký Mới!', 'error');
+                    return;
+                }
+                if (user.password !== password) {
+                    showToast('Mật khẩu không chính xác!', 'error');
+                    return;
+                }
+                appState.currentUser = user;
+                saveState();
+                closeModal('auth-modal');
+                playSound('click');
+                showToast(`Đăng nhập thành công! Chào mừng ${user.username} trở lại.`, 'success');
+            }
+            document.getElementById('auth-form').reset();
+        }
+
+        function logout() {
+            appState.currentUser = null;
+            saveState();
+            showToast('Bạn đã đăng xuất khỏi tài khoản.', 'info');
+        }
+
+        function requireAuth() {
+            if (!appState.currentUser) {
+                showToast('Vui lòng đăng nhập hoặc đăng ký để sử dụng tính năng này!', 'warning');
+                openAuthModal('register');
+                return false;
+            }
+            return true;
+        }
+
+        // --- 6. HỆ THỐNG VÍ: NẠP TIỀN & RÚT TIỀN ---
+        function openWalletModal(tab = 'deposit') {
+            if (!requireAuth()) return;
+            switchWalletTab(tab);
+            document.getElementById('deposit-memo').textContent = `NAP ${appState.currentUser.username.toUpperCase()}`;
+            openModal('wallet-modal');
+        }
+
+        function switchWalletTab(tab) {
+            const depTab = document.getElementById('wallet-tab-deposit');
+            const witTab = document.getElementById('wallet-tab-withdraw');
+            const depForm = document.getElementById('deposit-form');
+            const witForm = document.getElementById('withdraw-form');
+
+            if (tab === 'deposit') {
+                depTab.className = 'py-2 rounded-lg text-xs font-bold gold-gradient text-obsidian-950 transition';
+                witTab.className = 'py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                depForm.classList.remove('hidden');
+                witForm.classList.add('hidden');
+            } else {
+                witTab.className = 'py-2 rounded-lg text-xs font-bold bg-emerald-500 text-obsidian-950 transition';
+                depTab.className = 'py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                witForm.classList.remove('hidden');
+                depForm.classList.add('hidden');
+            }
+        }
+
+        function setDepositAmount(val) {
+            document.getElementById('deposit-amount').value = val;
+            playSound('click');
+        }
+
+        function handleDeposit(e) {
+            e.preventDefault();
+            if (!requireAuth()) return;
+            const amount = parseInt(document.getElementById('deposit-amount').value, 10);
+            const method = document.querySelector('input[name="dep-method"]:checked').value;
+
+            if (isNaN(amount) || amount < 10000) {
+                showToast('Số xu nạp tối thiểu là 10,000 XU!', 'error');
+                return;
+            }
+
+            appState.currentUser.balance += amount;
+            appState.currentUser.totalDeposited += amount;
+            addHistoryLog('DEPOSIT', `Nạp xu qua ${method}`, amount, true);
+            saveState();
+            closeModal('wallet-modal');
+            playSound('win');
+            showToast(`Nạp thành công +${formatCoins(amount)} XU vào tài khoản!`, 'success');
+        }
+
+        function handleWithdraw(e) {
+            e.preventDefault();
+            if (!requireAuth()) return;
+            const bank = document.getElementById('withdraw-bank').value;
+            const acc = document.getElementById('withdraw-account').value.trim();
+            const amount = parseInt(document.getElementById('withdraw-amount').value, 10);
+
+            if (isNaN(amount) || amount < 50000) {
+                showToast('Số xu rút tối thiểu là 50,000 XU!', 'error');
+                return;
+            }
+            if (amount > appState.currentUser.balance) {
+                showToast('Số dư xu của bạn không đủ để thực hiện giao dịch này!', 'error');
+                return;
+            }
+
+            appState.currentUser.balance -= amount;
+            addHistoryLog('WITHDRAW', `Rút tiền về ${bank} (${acc})`, amount, false);
+            saveState();
+            closeModal('wallet-modal');
+            playSound('coin');
+            showToast(`Đã gửi lệnh rút ${formatCoins(amount)} XU về ${bank}!`, 'success');
+            document.getElementById('withdraw-form').reset();
+        }
+
+        // --- 7. NHIỆM VỤ TÂN THỦ & ĐIỂM DANH ---
+        const QUESTS_DATA = [
+            {
+                id: 'daily_checkin',
+                title: 'Điểm Danh Hàng Ngày',
+                desc: 'Đăng nhập vào cổng game F168 VIP hôm nay',
+                reward: 15000,
+                checkProgress: (u) => ({ current: 1, target: 1 })
+            },
+            {
+                id: 'play_3_games',
+                title: 'Tân Thủ Nhập Cuộc',
+                desc: 'Tham gia chơi đủ 3 ván game bất kỳ',
+                reward: 30000,
+                checkProgress: (u) => ({ current: Math.min(u.gamesPlayed, 3), target: 3 })
+            },
+            {
+                id: 'first_deposit',
+                title: 'Nạp Lần Đầu Nhận Quà',
+                desc: 'Thực hiện giao dịch nạp xu từ 50,000 XU trở lên',
+                reward: 50000,
+                checkProgress: (u) => ({ current: Math.min(u.totalDeposited, 50000), target: 50000 })
+            },
+            {
+                id: 'master_10_games',
+                title: 'Cao Thủ Săn Hũ',
+                desc: 'Hoàn thành 10 lượt chơi tại sảnh game F168',
+                reward: 100000,
+                checkProgress: (u) => ({ current: Math.min(u.gamesPlayed, 10), target: 10 })
+            }
+        ];
+
+        function renderQuests() {
+            const container = document.getElementById('quest-list');
+            const badge = document.getElementById('quest-badge');
+            let hasClaimable = false;
+
+            if (!appState.currentUser) {
+                container.innerHTML = `
+                    <div class="text-center py-6 space-y-3">
+                        <p class="text-sm text-gray-300">Bạn cần đăng nhập để xem tiến độ nhiệm vụ và nhận thưởng!</p>
+                        <button onclick="closeModal('quest-modal'); openAuthModal('register')" class="px-5 py-2.5 rounded-xl font-bold text-xs gold-gradient text-obsidian-950">Đăng Nhập / Đăng Ký Ngay</button>
+                    </div>
+                `;
+                badge.classList.add('hidden');
+                return;
+            }
+
+            const u = appState.currentUser;
+            container.innerHTML = QUESTS_DATA.map(q => {
+                const prog = q.checkProgress(u);
+                const percent = Math.min(100, Math.round((prog.current / prog.target) * 100));
+                const isDone = prog.current >= prog.target;
+                const isClaimed = u.questsClaimed.includes(q.id);
+
+                if (isDone && !isClaimed) hasClaimable = true;
+
+                let btnHtml = '';
+                if (isClaimed) {
+                    btnHtml = `<span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/5 text-gray-500 border border-white/10">Đã Nhận</span>`;
+                } else if (isDone) {
+                    btnHtml = `<button onclick="claimQuest('${q.id}')" class="px-4 py-2 rounded-xl text-xs font-bold gold-gradient text-obsidian-950 shadow animate-pulse">Nhận +${formatCoins(q.reward)}</button>`;
+                } else {
+                    btnHtml = `<span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-yellow-400 border border-yellow-500/20">+${formatCoins(q.reward)} XU</span>`;
+                }
+
+                return `
+                    <div class="bg-obsidian-950/90 p-3.5 rounded-2xl border border-white/10 flex items-center justify-between gap-3">
+                        <div class="flex-1 space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-sm text-white">${q.title}</h4>
+                            </div>
+                            <p class="text-xs text-gray-400">${q.desc}</p>
+                            <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                                <div class="gold-gradient h-full transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                        <div class="shrink-0">
+                            ${btnHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (hasClaimable) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+        }
+
+        function claimQuest(questId) {
+            if (!requireAuth()) return;
+            const quest = QUESTS_DATA.find(q => q.id === questId);
+            if (!quest) return;
+            if (appState.currentUser.questsClaimed.includes(questId)) return;
+
+            appState.currentUser.questsClaimed.push(questId);
+            appState.currentUser.balance += quest.reward;
+            addHistoryLog('QUEST', `Thưởng nhiệm vụ: ${quest.title}`, quest.reward, true);
+            saveState();
+            playSound('win');
+            showToast(`Nhận thành công +${formatCoins(quest.reward)} XU từ nhiệm vụ!`, 'success');
+        }
+
+        // --- 8. RENDER SẢNH GAME & LỌC DANH MỤC ---
+        let currentCategory = 'all';
+
+        function switchLobbyTab(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.lobby-tab').forEach(btn => {
+                if (btn.dataset.tab === cat) {
+                    btn.className = 'lobby-tab active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold gold-gradient text-obsidian-950 whitespace-nowrap transition';
+                } else {
+                    btn.className = 'lobby-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-obsidian-800 text-gray-300 hover:text-white border border-white/5 whitespace-nowrap transition';
+                }
+            });
+            filterGames();
+        }
+
+        function filterGames() {
+            const keyword = document.getElementById('game-search').value.toLowerCase().trim();
+            const grid = document.getElementById('games-grid');
+
+            const filtered = GAMES_CATALOG.filter(g => {
+                const matchCat = currentCategory === 'all' || g.category === currentCategory;
+                const matchKey = g.name.toLowerCase().includes(keyword);
+                return matchCat && matchKey;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 text-sm">Không tìm thấy trò chơi phù hợp.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(game => `
+                <div onclick="launchGame('${game.playable ? game.id : game.redirectGame}', '${game.name}')" class="group cursor-pointer rounded-2xl overflow-hidden bg-obsidian-800 border border-white/10 hover:border-yellow-400/60 transition-all duration-300 hover:-translate-y-1 shadow-lg flex flex-col">
+                    <div class="relative h-32 sm:h-36 bg-gradient-to-br ${game.gradient} flex items-center justify-center overflow-hidden">
+                        <span class="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${game.tagColor} text-white shadow">
+                            ${game.tag}
+                        </span>
+                        <i class="fa-solid ${game.icon} text-5xl sm:text-6xl text-white/90 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg"></i>
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="px-4 py-1.5 rounded-full gold-gradient text-obsidian-950 font-bold text-xs shadow-lg">
+                                <i class="fa-solid fa-play mr-1"></i> VÀO GAME
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between bg-obsidian-900/90">
+                        <h3 class="font-bold text-xs sm:text-sm text-white group-hover:text-yellow-400 transition truncate">${game.name}</h3>
+                        <div class="flex items-center justify-between mt-2 text-[11px] text-gray-400">
+                            <span><i class="fa-solid fa-users text-emerald-400 mr-1"></i>${game.players}</span>
+                            <span class="text-yellow-500 font-semibold">VIP</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function launchGame(gameId, customTitle = null) {
+            if (!requireAuth()) return;
+            playSound('click');
+
+            if (customTitle && !['Quyết Chiến Tiền Thưởng', 'Tài Xỉu Hoàng Gia', 'Vòng Quay May Mắn'].includes(customTitle)) {
+                showToast(`Đang kết nối sảnh ${customTitle}...`, 'info');
+            }
+
+            if (gameId === 'quyet-chien') {
+                initQuyetChien();
+                document.getElementById('game-quyet-chien').classList.remove('hidden');
+            } else if (gameId === 'tai-xiu') {
+                initTaiXiu();
+                document.getElementById('game-tai-xiu').classList.remove('hidden');
+            } else if (gameId === 'vong-quay') {
+                drawLuckyWheel();
+                document.getElementById('game-vong-quay').classList.remove('hidden');
+            }
+        }
+
+        function closeGame(gameId) {
+            if (gameId === 'quyet-chien') {
+                qcAutoSpin = false;
+                updateQcAutoBtn();
+            }
+            document.getElementById(`game-${gameId}`).classList.add('hidden');
+            playSound('click');
+        }
+
+        // --- 9. LOGIC GAME 1: QUYẾT CHIẾN TIỀN THƯỞNG (SLOT 5x3) ---
+        const QC_SYMBOLS = [
+            { id: 'skull', icon: '💀', mult: 10, color: 'text-yellow-400' },
+            { id: 'gun', icon: '🔫', mult: 6, color: 'text-orange-400' },
+            { id: 'guitar', icon: '🎸', mult: 4, color: 'text-rose-400' },
+            { id: 'hat', icon: '🤠', mult: 3, color: 'text-amber-300' },
+            { id: 'gem', icon: '💎', mult: 2, color: 'text-cyan-400' }
+        ];
+        const QC_BETS = [500, 1000, 2000, 5000, 10000, 25000, 50000];
+        let qcBetIndex = 1; // 1,000
+        let qcMultiplierIndex = 0; // [1, 2, 3, 5]
+        const QC_MULTS = [1, 2, 3, 5];
+        let qcIsSpinning = false;
+        let qcAutoSpin = false;
+
+        function initQuyetChien() {
+            const grid = document.getElementById('qc-grid');
+            if (grid.children.length === 0) {
+                let html = '';
+                for (let i = 0; i < 15; i++) {
+                    const sym = QC_SYMBOLS[i % QC_SYMBOLS.length];
+                    html += `<div id="qc-cell-${i}" class="h-16 sm:h-20 rounded-xl bg-obsidian-900 border border-yellow-500/20 flex items-center justify-center text-3xl sm:text-4xl shadow-inner transition-all">${sym.icon}</div>`;
+                }
+                grid.innerHTML = html;
+            }
+            updateQcUI();
+        }
+
+        function changeQcBet(dir) {
+            if (qcIsSpinning) return;
+            qcBetIndex = Math.max(0, Math.min(QC_BETS.length - 1, qcBetIndex + dir));
+            updateQcUI();
+            playSound('click');
+        }
+
+        function updateQcUI() {
+            document.getElementById('qc-bet-display').textContent = formatCoins(QC_BETS[qcBetIndex]);
+            const curMult = QC_MULTS[qcMultiplierIndex];
+            document.querySelectorAll('.qc-mult').forEach(el => {
+                if (parseInt(el.dataset.mult) === curMult) {
+                    el.className = 'qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-yellow-500 text-obsidian-950 shadow scale-110 transition';
+                } else {
+                    el.className = 'qc-mult px-3 py-0.5 rounded-full font-gaming font-bold text-xs bg-white/10 text-gray-400 transition';
+                }
+            });
+        }
+
+        function toggleQcAuto() {
+            qcAutoSpin = !qcAutoSpin;
+            updateQcAutoBtn();
+            if (qcAutoSpin && !qcIsSpinning) {
+                spinQuyetChien();
+            }
+        }
+
+        function updateQcAutoBtn() {
+            const btn = document.getElementById('qc-auto-btn');
+            if (qcAutoSpin) {
+                btn.className = 'px-4 py-3 rounded-xl font-bold text-xs bg-red-600 text-white border border-red-400 animate-pulse';
+                btn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> DỪNG QUAY';
+            } else {
+                btn.className = 'px-4 py-3 rounded-xl font-bold text-xs bg-obsidian-800 hover:bg-obsidian-700 text-yellow-400 border border-yellow-500/40 transition';
+                btn.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> TỰ QUAY';
+            }
+        }
+
+        function spinQuyetChien() {
+            if (!requireAuth() || qcIsSpinning) return;
+            const bet = QC_BETS[qcBetIndex];
+
+            if (appState.currentUser.balance < bet) {
+                showToast('Số dư xu không đủ để đặt mức cược này!', 'error');
+                qcAutoSpin = false;
+                updateQcAutoBtn();
+                return;
+            }
+
+            qcIsSpinning = true;
+            appState.currentUser.balance -= bet;
+            appState.currentUser.gamesPlayed += 1;
+            saveState();
+            playSound('spin');
+
+            document.getElementById('qc-win-banner').classList.add('hidden');
+            // Reset viền sáng các ô
+            for (let i = 0; i < 15; i++) {
+                const cell = document.getElementById(`qc-cell-${i}`);
+                cell.className = 'h-16 sm:h-20 rounded-xl bg-obsidian-900 border border-yellow-500/20 flex items-center justify-center text-3xl sm:text-4xl shadow-inner slot-reel-blur';
+            }
+
+            // Hiệu ứng đảo biểu tượng trong 650ms
+            let ticks = 0;
+            const interval = setInterval(() => {
+                for (let i = 0; i < 15; i++) {
+                    const randSym = QC_SYMBOLS[Math.floor(Math.random() * QC_SYMBOLS.length)];
+                    document.getElementById(`qc-cell-${i}`).textContent = randSym.icon;
+                }
+                ticks++;
+                if (ticks >= 8) {
+                    clearInterval(interval);
+                    finalizeQuyetChien(bet);
+                }
+            }, 80);
+        }
+
+        function finalizeQuyetChien(bet) {
+            // Sinh ma trận 3 hàng x 5 cột
+            const matrix = [];
+            for (let i = 0; i < 15; i++) {
+                const sym = QC_SYMBOLS[Math.floor(Math.random() * QC_SYMBOLS.length)];
+                matrix.push(sym);
+                const cell = document.getElementById(`qc-cell-${i}`);
+                cell.classList.remove('slot-reel-blur');
+                cell.textContent = sym.icon;
+            }
+
+            // Kiểm tra thắng trên 3 hàng ngang (0-4, 5-9, 10-14)
+            let totalWin = 0;
+            const winningIndices = new Set();
+            const mult = QC_MULTS[qcMultiplierIndex];
+
+            for (let row = 0; row < 3; row++) {
+                const start = row * 5;
+                const rowSyms = matrix.slice(start, start + 5);
+                // Đếm số lượng từng biểu tượng trên hàng
+                const counts = {};
+                rowSyms.forEach(s => counts[s.id] = (counts[s.id] || 0) + 1);
+
+                for (const symId in counts) {
+                    if (counts[symId] >= 3) {
+                        const symObj = QC_SYMBOLS.find(s => s.id === symId);
+                        const matchCount = counts[symId]; // 3, 4 hoặc 5
+                        const comboBonus = matchCount === 3 ? 1 : (matchCount === 4 ? 2.5 : 5);
+                        totalWin += Math.round(bet * symObj.mult * comboBonus * mult);
+
+                        for (let c = 0; c < 5; c++) {
+                            if (rowSyms[c].id === symId) winningIndices.add(start + c);
+                        }
+                    }
+                }
+            }
+
+            if (totalWin > 0) {
+                appState.currentUser.balance += totalWin;
+                addHistoryLog('GAME', `Thắng Quyết Chiến (x${mult})`, totalWin, true);
+                document.getElementById('qc-last-win').textContent = `+${formatCoins(totalWin)}`;
+                playSound('win');
+
+                // Tô sáng các ô thắng
+                winningIndices.forEach(idx => {
+                    const cell = document.getElementById(`qc-cell-${idx}`);
+                    cell.className = 'h-16 sm:h-20 rounded-xl bg-yellow-500/30 border-2 border-yellow-400 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_0_15px_rgba(250,204,21,0.6)] scale-105 transition';
+                });
+
+                // Tăng hệ số nhân cho lượt kế tiếp
+                if (qcMultiplierIndex < QC_MULTS.length - 1) {
+                    qcMultiplierIndex++;
+                }
+
+                // Hiển thị banner thắng lớn nếu thắng >= 5 lần cược
+                if (totalWin >= bet * 4) {
+                    const banner = document.getElementById('qc-win-banner');
+                    document.getElementById('qc-win-title').textContent = totalWin >= bet * 15 ? 'NỔ HŨ SIÊU CẤP!' : 'THẮNG LỚN!';
+                    document.getElementById('qc-win-amount').textContent = `+${formatCoins(totalWin)} XU`;
+                    banner.classList.remove('hidden');
+                    setTimeout(() => banner.classList.add('hidden'), 1800);
+                }
+            } else {
+                document.getElementById('qc-last-win').textContent = '0';
+                // Reset hệ số nhân về x1 khi trượt
+                qcMultiplierIndex = 0;
+            }
+
+            saveState();
+            updateQcUI();
+            qcIsSpinning = false;
+
+            if (qcAutoSpin) {
+                setTimeout(() => {
+                    if (qcAutoSpin) spinQuyetChien();
+                }, 1100);
+            }
+        }
+
+        // --- 10. LOGIC GAME 2: TÀI XỈU HOÀNG GIA ---
+        let txSelectedSide = 'TAI';
+        let txBets = { TAI: 0, XIU: 0 };
+        let txHistory = ['TAI', 'XIU', 'TAI', 'TAI', 'XIU', 'TAI', 'XIU', 'XIU', 'TAI'];
+        let txRolling = false;
+
+        function initTaiXiu() {
+            selectTxSide(txSelectedSide);
+            renderTxHistory();
+            updateTxBetDisplay();
+        }
+
+        function selectTxSide(side) {
+            txSelectedSide = side;
+            const boxTai = document.getElementById('tx-box-TAI');
+            const boxXiu = document.getElementById('tx-box-XIU');
+
+            if (side === 'TAI') {
+                boxTai.className = 'cursor-pointer rounded-2xl p-4 text-center border-2 border-yellow-400 bg-yellow-500/15 shadow-[0_0_20px_rgba(250,204,21,0.25)] transition relative';
+                boxXiu.className = 'cursor-pointer rounded-2xl p-4 text-center border-2 border-white/10 bg-black/40 hover:border-cyan-400 transition relative';
+            } else {
+                boxXiu.className = 'cursor-pointer rounded-2xl p-4 text-center border-2 border-cyan-400 bg-cyan-500/15 shadow-[0_0_20px_rgba(34,211,238,0.25)] transition relative';
+                boxTai.className = 'cursor-pointer rounded-2xl p-4 text-center border-2 border-white/10 bg-black/40 hover:border-yellow-400 transition relative';
+            }
+            playSound('click');
+        }
+
+        function addTxChip(amount) {
+            if (!requireAuth() || txRolling) return;
+            const curBal = appState.currentUser.balance;
+            const totalCurrentBet = txBets.TAI + txBets.XIU;
+            const available = curBal - totalCurrentBet;
+
+            if (available <= 0) {
+                showToast('Bạn đã dùng hết số dư khả dụng cho phiên này!', 'warning');
+                return;
+            }
+
+            let addVal = amount === 'ALL' ? available : amount;
+            if (addVal > available) addVal = available;
+
+            txBets[txSelectedSide] += addVal;
+            updateTxBetDisplay();
+            playSound('coin');
+        }
+
+        function clearTxBet() {
+            if (txRolling) return;
+            txBets = { TAI: 0, XIU: 0 };
+            updateTxBetDisplay();
+            playSound('click');
+        }
+
+        function updateTxBetDisplay() {
+            document.getElementById('tx-bet-TAI').textContent = formatCoins(txBets.TAI);
+            document.getElementById('tx-bet-XIU').textContent = formatCoins(txBets.XIU);
+        }
+
+        function renderTxHistory() {
+            const container = document.getElementById('tx-history-dots');
+            container.innerHTML = txHistory.slice(-14).map(res => {
+                if (res === 'TAI') {
+                    return `<span title="Tài" class="w-5 h-5 rounded-full bg-obsidian-950 border-2 border-yellow-400 text-[9px] font-bold text-yellow-400 flex items-center justify-center shrink-0">T</span>`;
+                } else {
+                    return `<span title="Xỉu" class="w-5 h-5 rounded-full bg-white text-[9px] font-bold text-obsidian-950 flex items-center justify-center shrink-0">X</span>`;
+                }
+            }).join('');
+        }
+
+        function rollTaiXiu() {
+            if (!requireAuth() || txRolling) return;
+            const totalBet = txBets.TAI + txBets.XIU;
+            if (totalBet <= 0) {
+                showToast('Vui lòng chọn cửa Tài hoặc Xỉu và đặt cược trước khi lắc!', 'warning');
+                return;
+            }
+            if (appState.currentUser.balance < totalBet) {
+                showToast('Số dư không đủ!', 'error');
+                return;
+            }
+
+            txRolling = true;
+            appState.currentUser.balance -= totalBet;
+            appState.currentUser.gamesPlayed += 1;
+            saveState();
+
+            const bowl = document.getElementById('tx-bowl');
+            const plate = document.getElementById('tx-plate');
+            const resText = document.getElementById('tx-result-text');
+
+            // Úp bát và rung lắc
+            bowl.classList.remove('bowl-open');
+            resText.textContent = 'Đang lắc xúc xắc...';
+            playSound('spin');
+
+            setTimeout(() => {
+                plate.classList.add('animate-shake');
+            }, 300);
+
+            setTimeout(() => {
+                plate.classList.remove('animate-shake');
+                // Tung 3 xúc xắc
+                const d1 = Math.floor(Math.random() * 6) + 1;
+                const d2 = Math.floor(Math.random() * 6) + 1;
+                const d3 = Math.floor(Math.random() * 6) + 1;
+                const sum = d1 + d2 + d3;
+                const outcome = sum >= 11 ? 'TAI' : 'XIU';
+
+                // Render xúc xắc
+                document.getElementById('tx-dice-container').innerHTML = [d1, d2, d3].map(val => {
+                    const isRed = val === 1 || val === 4;
+                    return `<span class="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl shadow-md flex items-center justify-center ${isRed ? 'text-red-600' : 'text-obsidian-950'} font-bold text-xl border border-gray-300">${val}</span>`;
+                }).join('');
+
+                // Mở bát
+                bowl.classList.add('bowl-open');
+                resText.textContent = `${outcome === 'TAI' ? 'TÀI' : 'XỈU'} (${sum} Điểm)`;
+                txHistory.push(outcome);
+                renderTxHistory();
+
+                // Tính thưởng (tỷ lệ 1.98)
+                const winBet = txBets[outcome];
+                if (winBet > 0) {
+                    const payout = Math.round(winBet * 1.98);
+                    appState.currentUser.balance += payout;
+                    addHistoryLog('GAME', `Thắng Tài Xỉu (${outcome === 'TAI' ? 'Tài' : 'Xỉu'} ${sum}đ)`, payout, true);
+                    playSound('win');
+                    showToast(`Chúc mừng! Kết quả ${outcome === 'TAI' ? 'TÀI' : 'XỈU'} (${sum} điểm) — Bạn thắng +${formatCoins(payout)} XU!`, 'success');
+                } else {
+                    addHistoryLog('GAME', `Cược Tài Xỉu (${sum} điểm)`, totalBet, false);
+                    showToast(`Kết quả ${outcome === 'TAI' ? 'TÀI' : 'XỈU'} (${sum} điểm). Chúc bạn may mắn ván sau!`, 'info');
+                }
+
+                txBets = { TAI: 0, XIU: 0 };
+                updateTxBetDisplay();
+                saveState();
+                txRolling = false;
+            }, 1200);
+        }
+
+        // --- 11. LOGIC GAME 3: VÒNG QUAY MAY MẮN ---
+        const WHEEL_SEGMENTS = [
+            { label: 'x2', mult: 2, color: '#eab308' },
+            { label: 'Chúc May Mắn', mult: 0, color: '#1e293b' },
+            { label: 'x3', mult: 3, color: '#10b981' },
+            { label: 'Hoàn Vé', mult: 1, color: '#3b82f6' },
+            { label: 'x5', mult: 5, color: '#f97316' },
+            { label: 'Chúc May Mắn', mult: 0, color: '#0f172a' },
+            { label: 'x10 VIP', mult: 10, color: '#ec4899' },
+            { label: 'x1.5', mult: 1.5, color: '#8b5cf6' }
+        ];
+        let wheelRotation = 0;
+        let wheelSpinning = false;
+
+        function drawLuckyWheel() {
+            const canvas = document.getElementById('lucky-wheel-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const radius = cx - 6;
+            const arc = (2 * Math.PI) / WHEEL_SEGMENTS.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            WHEEL_SEGMENTS.forEach((seg, i) => {
+                const angle = i * arc - Math.PI / 2;
+                ctx.beginPath();
+                ctx.fillStyle = seg.color;
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, angle, angle + arc);
+                ctx.lineTo(cx, cy);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Vẽ chữ
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px "Chakra Petch", sans-serif';
+                ctx.fillText(seg.label, radius - 18, 5);
+                ctx.restore();
+            });
+
+            // Tâm vòng quay
+            ctx.beginPath();
+            ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+            ctx.fillStyle = '#facc15';
+            ctx.fill();
+            ctx.fillStyle = '#07080b';
+            ctx.font = 'bold 11px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('F168', cx, cy + 4);
+        }
+
+        function spinLuckyWheel() {
+            if (!requireAuth() || wheelSpinning) return;
+            const bet = parseInt(document.getElementById('wheel-bet-select').value, 10);
+
+            if (appState.currentUser.balance < bet) {
+                showToast('Số dư xu không đủ để mua vé quay!', 'error');
+                return;
+            }
+
+            wheelSpinning = true;
+            appState.currentUser.balance -= bet;
+            appState.currentUser.gamesPlayed += 1;
+            saveState();
+            playSound('spin');
+
+            const winIdx = Math.floor(Math.random() * WHEEL_SEGMENTS.length);
+            const segDeg = 360 / WHEEL_SEGMENTS.length;
+            // Tính góc quay để ô winIdx dừng đúng đỉnh 12 giờ
+            const targetAngle = 360 - (winIdx * segDeg + segDeg / 2);
+            const extraSpins = 360 * 6;
+            wheelRotation += extraSpins + (targetAngle - (wheelRotation % 360) + 360) % 360;
+
+            const canvas = document.getElementById('lucky-wheel-canvas');
+            canvas.style.transform = `rotate(${wheelRotation}deg)`;
+
+            setTimeout(() => {
+                const seg = WHEEL_SEGMENTS[winIdx];
+                const reward = Math.round(bet * seg.mult);
+                if (reward > 0) {
+                    appState.currentUser.balance += reward;
+                    addHistoryLog('GAME', `Vòng Quay May Mắn (${seg.label})`, reward, true);
+                    playSound('win');
+                    showToast(`Tuyệt vời! Bạn quay trúng ô ${seg.label} và nhận +${formatCoins(reward)} XU!`, 'success');
+                } else {
+                    addHistoryLog('GAME', `Vòng Quay May Mắn (Trượt)`, bet, false);
+                    showToast('Rất tiếc! Chúc bạn may mắn ở lượt quay tiếp theo.', 'info');
+                }
+                saveState();
+                wheelSpinning = false;
+            }, 4600);
+        }
+
+        // --- 12. BẢNG XẾP HẠNG & LIVE FEED GIẢ LẬP ---
+        const MOCK_LEADERS = [
+            { name: 'ThầnBàiMiềnTây', vip: 5, coins: 15890000 },
+            { name: 'HoangNam99', vip: 5, coins: 9420500 },
+            { name: 'ĐạiGiaSàiThành', vip: 4, coins: 6150000 },
+            { name: 'VuaNổHũ88', vip: 4, coins: 4320000 },
+            { name: 'MỹNhânNgư', vip: 3, coins: 2890000 },
+            { name: 'SátThủTàiXỉu', vip: 3, coins: 1740000 }
+        ];
+
+        function renderLeaderboards() {
+            let list = [...MOCK_LEADERS];
+            if (appState.currentUser) {
+                list.push({
+                    name: `${appState.currentUser.username} (Bạn)`,
+                    vip: appState.currentUser.vip,
+                    coins: appState.currentUser.balance,
+                    isMe: true
+                });
+            }
+            list.sort((a, b) => b.coins - a.coins);
+
+            const renderRow = (item, idx) => {
+                const rankColors = ['text-yellow-400', 'text-gray-300', 'text-amber-600'];
+                const rankIcon = idx < 3 ? `<i class="fa-solid fa-medal ${rankColors[idx]}"></i>` : `<span class="text-gray-500 font-gaming">#${idx + 1}</span>`;
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl ${item.isMe ? 'bg-yellow-500/15 border border-yellow-500/40' : 'bg-obsidian-950/70 border border-white/5'}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 text-center font-bold text-sm">${rankIcon}</div>
+                            <div>
+                                <span class="text-xs sm:text-sm font-bold text-white">${item.name}</span>
+                                <span class="ml-1.5 text-[10px] font-gaming font-bold px-1.5 py-0.2 rounded bg-yellow-500/20 text-yellow-400">VIP ${item.vip}</span>
+                            </div>
+                        </div>
+                        <span class="font-gaming font-bold text-xs sm:text-sm text-yellow-400">${formatCoins(item.coins)} XU</span>
+                    </div>
+                `;
+            };
+
+            document.getElementById('mini-leaderboard').innerHTML = list.slice(0, 4).map(renderRow).join('');
+            document.getElementById('full-leaderboard').innerHTML = list.map(renderRow).join('');
+        }
+
+        function initLiveWinsFeed() {
+            const feed = document.getElementById('live-wins-feed');
+            const samples = [
+                { user: 'TuanAnh***', game: 'Quyết Chiến Tiền Thưởng', win: 450000 },
+                { user: 'MinhThu***', game: 'Tài Xỉu Hoàng Gia', win: 198000 },
+                { user: 'KhanhSky***', game: 'Vòng Quay May Mắn', win: 500000 },
+                { user: 'BaoLong***', game: 'Quyết Chiến Tiền Thưởng', win: 1250000 }
+            ];
+
+            feed.innerHTML = samples.map(s => `
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-obsidian-950/70 border border-white/5 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="font-semibold text-gray-200">${s.user}</span>
+                        <span class="text-gray-500">thắng tại</span>
+                        <span class="text-orange-300 font-medium">${s.game}</span>
+                    </div>
+                    <span class="font-gaming font-bold text-emerald-400">+${formatCoins(s.win)}</span>
+                </div>
+            `).join('');
+
+            // Cập nhật Jackpot nhảy số liên tục
+            let jackpotVal = 88450200;
+            setInterval(() => {
+                jackpotVal += Math.floor(Math.random() * 350) + 50;
+                const el = document.getElementById('jackpot-counter');
+                if (el) el.textContent = formatCoins(jackpotVal);
+            }, 2500);
+        }
+
+        // --- 13. CẬP NHẬT GIAO DIỆN CHUNG & LỊCH SỬ ---
+        function updateUI() {
+            const authBtns = document.getElementById('auth-buttons');
+            const userPanel = document.getElementById('user-panel');
+            const u = appState.currentUser;
+
+            if (u) {
+                authBtns.classList.add('hidden');
+                userPanel.classList.remove('hidden');
+                userPanel.classList.add('flex');
+
+                document.getElementById('header-username').textContent = u.username;
+                document.getElementById('header-vip').textContent = `VIP ${u.vip}`;
+                document.getElementById('header-balance').textContent = formatCoins(u.balance);
+                document.getElementById('wallet-modal-balance').textContent = `${formatCoins(u.balance)} XU`;
+
+                document.querySelectorAll('.game-user-balance').forEach(el => {
+                    el.textContent = formatCoins(u.balance);
+                });
+            } else {
+                authBtns.classList.remove('hidden');
+                userPanel.classList.add('hidden');
+                userPanel.classList.remove('flex');
+            }
+
+            renderQuests();
+            renderLeaderboards();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            if (!appState.currentUser || appState.currentUser.history.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400">Chưa có lịch sử giao dịch hoặc cược game nào.</div>`;
+                return;
+            }
+
+            container.innerHTML = appState.currentUser.history.map(item => `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-obsidian-950 border border-white/10">
+                    <div>
+                        <p class="font-semibold text-white">${item.title}</p>
+                        <span class="text-[11px] text-gray-500">${item.time}</span>
+                    </div>
+                    <span class="font-gaming font-bold text-sm ${item.isPositive ? 'text-emerald-400' : 'text-red-400'}">
+                        ${item.isPositive ? '+' : '-'}${formatCoins(item.amount)} XU
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // --- 14. TIỆN ÍCH ĐÓNG/MỞ MODAL ---
+        function openModal(id) {
+            if (id === 'history-modal' && !requireAuth()) return;
+            document.getElementById(id).classList.remove('hidden');
+            playSound('click');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Khởi chạy ứng dụng khi tải trang xong
+        window.onload = function () {
+            loadState();
+            filterGames();
+            initLiveWinsFeed();
+        };
+    </script>
+</body>
+</html>
